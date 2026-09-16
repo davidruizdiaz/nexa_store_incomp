@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Venta</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; margin: 1.5rem auto; width: 94%; color: #333; background: #f5f5f5; }
+        h1 { margin: 0 0 .5rem; font-size: 1.3rem; }
+        .header-bar { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+        .header-bar h1 { flex: 1; }
+        .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem 1.25rem; background: #fff; margin-bottom: 1rem; }
+        .card h2 { margin: 0 0 .75rem; font-size: 1rem; color: #1a1a2e; border-bottom: 1px solid #eee; padding-bottom: .5rem; }
+        .form-row { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; align-items: flex-end; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-weight: 600; font-size: .8rem; margin-bottom: .25rem; color: #555; }
+        .form-group input, .form-group select { padding: .4rem .5rem; border: 1px solid #ccc; border-radius: 4px; font-size: .85rem; }
+        .form-group input[type=text], .form-group input[type=date], .form-group select { width: 200px; }
+        .form-group input[type=number] { width: 120px; }
+        .btn { padding: .4rem 1rem; border: none; border-radius: 4px; cursor: pointer; font-size: .85rem; font-weight: 600; text-decoration: none; display: inline-block; }
+        .btn-primary { background: #2f6fed; color: #fff; }
+        .btn-success { background: #27ae60; color: #fff; }
+        .btn-success:hover { background: #219a52; }
+        .btn-danger { background: #d9534f; color: #fff; }
+        .btn-danger:hover { background: #c9302c; }
+        .btn-cancel { background: #aaa; color: #fff; }
+        .btn-cancel:hover { background: #888; }
+        .btn-sm { padding: .25rem .6rem; font-size: .78rem; }
+        table { width: 100%; border-collapse: collapse; margin-top: .5rem; }
+        th, td { border: 1px solid #ddd; padding: .4rem .5rem; text-align: left; font-size: .85rem; }
+        th { background: #f1f1f1; font-weight: 600; }
+        .error { background: #fdecea; border: 1px solid #f5c6cb; color: #c0392b; padding: .6rem .9rem; border-radius: 4px; margin-bottom: 1rem; font-size: .85rem; }
+        .empty-msg { text-align: center; color: #999; padding: 1.5rem; font-style: italic; }
+        .actions-bar { display: flex; gap: .5rem; margin-top: 1rem; justify-content: flex-end; }
+        .detalle-num { color: #888; font-size: .8rem; }
+        .badge { display: inline-block; padding: .25rem .6rem; border-radius: 12px; font-size: .8rem; font-weight: 600; color: #fff; }
+        .badge-success { background: #27ae60; }
+        .badge-danger { background: #d9534f; }
+        .badge-warning { background: #f0ad4e; }
+    </style>
+</head>
+<body>
+
+<div class="header-bar">
+    <h1 th:text="${ventaForm.venta.idVenta != null} ? 'Editar venta #' + ${ventaForm.venta.idVenta} : 'Nueva venta'">Venta</h1>
+    <a class="btn btn-cancel" th:href="@{/ventas}">← Volver al listado</a>
+</div>
+
+<div class="error" th:if="${error}" th:text="${error}"></div>
+
+<form th:action="@{/ventas/guardar}" th:object="${ventaForm}" method="post" id="ventaForm">
+    <!-- ID hidden para edicion -->
+    <input type="hidden" th:field="*{venta.idVenta}"/>
+
+    <!-- CABECERA -->
+    <div class="card">
+        <h2>Datos de la venta</h2>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="tiendaId">Tienda *</label>
+                <select th:field="*{venta.tiendaId}" id="tiendaId">
+                    <option value="">-- Seleccione tienda --</option>
+                    <option th:each="t : ${tiendas}" th:value="${t.idTienda}" th:text="${t.descripcion}"></option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="fechaVenta">Fecha *</label>
+                <input type="date" th:field="*{venta.fechaVenta}" id="fechaVenta"/>
+            </div>
+            <div class="form-group">
+                <label>Estado</label>
+                <div>
+                    <span th:if="${ventaForm.venta.idVenta == null}" class="badge badge-warning">Pendiente</span>
+                    <span th:if="${ventaForm.venta.idVenta != null}"
+                          th:class="${ventaForm.venta.estado.name() == 'Completada'} ? 'badge badge-success' : 'badge badge-danger'"
+                          th:text="${ventaForm.venta.estado}">
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="form-row" style="margin-top:.75rem;">
+            <div class="form-group">
+                <label for="clienteId">Cliente *</label>
+                <select th:field="*{venta.clienteId}" id="clienteId">
+                    <option value="">-- Seleccione cliente --</option>
+                    <option th:each="c : ${clientes}" th:value="${c.idCliente}" th:text="${c.nombre}"></option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="vendedorId">Vendedor *</label>
+                <select th:field="*{venta.vendedorId}" id="vendedorId">
+                    <option value="">-- Seleccione vendedor --</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- AGREGAR DETALLE -->
+    <div class="card">
+        <h2>Agregar detalle</h2>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="detProducto">Producto *</label>
+                <select id="detProducto">
+                    <option value="">-- Seleccione producto --</option>
+                    <option th:each="p : ${productos}" th:value="${p.idProducto}" th:text="${p.descripcion}" th:attrappend="data-precio=${p.precioCosto}"></option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="detUnidades">Unidades</label>
+                <input type="number" id="detUnidades" min="1" value="1"/>
+            </div>
+            <div class="form-group">
+                <label for="detValor">Valor vendido</label>
+                <input type="number" step="0.01" id="detValor" min="0" value="0"/>
+            </div>
+            <div class="form-group" style="justify-content:flex-end;">
+                <button type="button" class="btn btn-success" onclick="agregarDetalle()">+ Agregar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DETALLES AGREGADOS -->
+    <div class="card">
+        <h2>Detalles de la venta</h2>
+        <table id="tablaDetalles">
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>Producto</th>
+                <th>Unidades</th>
+                <th>Valor vendido</th>
+                <th>Acción</th>
+            </tr>
+            </thead>
+            <tbody id="detallesBody">
+            <tr th:each="d : ${ventaForm.detalles}" data-detalle="true"
+                th:attr="data-producto-id=${d.productoId}, data-unidades=${d.unidadesVendidas}, data-valor=${d.valorVendido}, data-producto-nombre=${d.productoNombre}">
+            </tr>
+            </tbody>
+        </table>
+        <div class="empty-msg" id="emptyMsg">No hay detalles agregados.</div>
+    </div>
+
+    <!-- ACCIONES -->
+    <div class="actions-bar">
+        <button type="submit" class="btn btn-primary">Guardar venta</button>
+        <a class="btn btn-cancel" th:href="@{/ventas}">Cancelar</a>
+    </div>
+</form>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    var vendedorActual = /*[[${ventaForm.venta.vendedorId}]]*/ null;
+    /*]]>*/
+</script>
+<script>
+    var detalles = [];
+    var idx = 0;
+
+    function init() {
+        var tbody = document.getElementById('detallesBody');
+        var rows = tbody.querySelectorAll('tr[data-detalle]');
+        var existentes = [];
+        for (var i = 0; i < rows.length; i++) {
+            var r = rows[i];
+            existentes.push({
+                pid: parseInt(r.getAttribute('data-producto-id')),
+                unr: parseInt(r.getAttribute('data-unidades')),
+                val: parseFloat(r.getAttribute('data-valor')),
+                nombre: r.getAttribute('data-producto-nombre')
+            });
+        }
+        tbody.innerHTML = '';
+        for (var j = 0; j < existentes.length; j++) {
+            var d = existentes[j];
+            agregarDetalleDirecto(idx, d.pid, d.unr, d.val, d.nombre);
+            idx++;
+        }
+        var tiendaSelect = document.getElementById('tiendaId');
+        if (tiendaSelect.value) {
+            cargarVendedores(tiendaSelect.value, vendedorActual);
+        }
+        document.getElementById('detProducto').addEventListener('change', calcularValorVendido);
+        document.getElementById('detUnidades').addEventListener('input', calcularValorVendido);
+    }
+
+    function calcularValorVendido() {
+        var sel = document.getElementById('detProducto');
+        var opt = sel.options[sel.selectedIndex];
+        var precioCosto = parseFloat(opt.getAttribute('data-precio')) || 0;
+        var unidades = parseInt(document.getElementById('detUnidades').value) || 0;
+        document.getElementById('detValor').value = (precioCosto * unidades).toFixed(2);
+    }
+
+    document.getElementById('tiendaId').addEventListener('change', function() {
+        var tiendaId = this.value;
+        var vendedorSelect = document.getElementById('vendedorId');
+        vendedorSelect.innerHTML = '<option value="">-- Cargando... --</option>';
+        if (!tiendaId) {
+            vendedorSelect.innerHTML = '<option value="">-- Seleccione vendedor --</option>';
+            return;
+        }
+        cargarVendedores(tiendaId, null);
+    });
+
+    function cargarVendedores(tiendaId, seleccionado) {
+        fetch('/ventas/api/vendedores?tiendaId=' + tiendaId)
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var sel = document.getElementById('vendedorId');
+                sel.innerHTML = '<option value="">-- Seleccione vendedor --</option>';
+                data.forEach(function(v) {
+                    var opt = document.createElement('option');
+                    opt.value = v.idVendedor;
+                    opt.textContent = v.nombre + ' ' + v.apellido;
+                    if (seleccionado && v.idVendedor == seleccionado) {
+                        opt.selected = true;
+                    }
+                    sel.appendChild(opt);
+                });
+            });
+    }
+
+    function agregarDetalle() {
+        var productoId = document.getElementById('detProducto').value;
+        var unidades = document.getElementById('detUnidades').value;
+        var valor = document.getElementById('detValor').value;
+        if (!productoId) { alert('Seleccione un producto.'); return; }
+        if (!unidades || parseInt(unidades) < 1) { alert('Ingrese la cantidad de unidades.'); return; }
+        var nombre = document.getElementById('detProducto').options[document.getElementById('detProducto').selectedIndex].text;
+        agregarDetalleDirecto(idx, parseInt(productoId), parseInt(unidades), parseFloat(valor || 0), nombre);
+        idx++;
+        document.getElementById('detProducto').value = '';
+        document.getElementById('detUnidades').value = '1';
+        document.getElementById('detValor').value = '0';
+    }
+
+    function agregarDetalleDirecto(num, productoId, unidades, valor, nombreProducto) {
+        detalles.push({ idx: num, productoId: productoId, unidades: unidades, valor: valor });
+        var tbody = document.getElementById('detallesBody');
+        var tr = document.createElement('tr');
+        tr.id = 'det-' + num;
+        tr.innerHTML =
+            '<td class="detalle-num">' + (tbody.children.length + 1) + '</td>' +
+            '<td>' + nombreProducto +
+                '<input type="hidden" name="detalles[' + num + '].productoId" value="' + productoId + '"/>' +
+            '</td>' +
+            '<td>' + unidades +
+                '<input type="hidden" name="detalles[' + num + '].unidadesVendidas" value="' + unidades + '"/>' +
+            '</td>' +
+            '<td>' + parseFloat(valor).toFixed(2) +
+                '<input type="hidden" name="detalles[' + num + '].valorVendido" value="' + valor + '"/>' +
+            '</td>' +
+            '<td><button type="button" class="btn btn-danger btn-sm" onclick="quitarDetalle(' + num + ')">Quitar</button></td>';
+        tbody.appendChild(tr);
+        document.getElementById('emptyMsg').style.display = 'none';
+    }
+
+    function quitarDetalle(num) {
+        var tr = document.getElementById('det-' + num);
+        if (tr) tr.remove();
+        for (var i = 0; i < detalles.length; i++) {
+            if (detalles[i].idx === num) { detalles.splice(i, 1); break; }
+        }
+        var tbody = document.getElementById('detallesBody');
+        if (tbody.children.length === 0) {
+            document.getElementById('emptyMsg').style.display = 'block';
+        }
+        var rows = tbody.children;
+        for (var j = 0; j < rows.length; j++) {
+            rows[j].children[0].textContent = j + 1;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

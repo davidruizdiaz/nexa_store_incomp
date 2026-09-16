@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Familias de Producto</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2rem auto; width: 90%; color: #333; }
+        h1 { margin: 0 0 1rem; }
+        .card { border: 1px solid #ddd; border-radius: 6px; padding: 1rem 1.25rem; background: #fafafa; }
+        .contenido { display: flex; align-items: flex-start; gap: 1.5rem; }
+        .form-col { flex: 0 0 340px; }
+        .table-col { flex: 1 1 auto; min-width: 0; overflow-x: auto; }
+        .card h2 { margin-top: 0; }
+        label { display: inline-block; width: 130px; margin: .35rem 0; font-weight: 600; }
+        input[type=text], input[type=number] { padding: .35rem .5rem; border: 1px solid #ccc; border-radius: 4px; width: 220px; }
+        button { padding: .4rem 1rem; border: none; border-radius: 4px; cursor: pointer; font-size: .85rem; font-weight: 600; }
+        .btn-primary { background: #2f6fed; color: #fff; }
+        .btn-edit { display: inline-block; background: #f0ad4e; color: #fff; text-decoration: none; padding: .35rem .8rem; border-radius: 4px; }
+        .btn-del { background: #d9534f; color: #fff; }
+        .btn-cancel { background: #aaa; color: #fff; text-decoration: none; padding: .4rem 1rem; border-radius: 4px; font-size: .85rem; font-weight: 600; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: .5rem .6rem; text-align: left; }
+        th { background: #f1f1f1; }
+        .error { background: #fdecea; border: 1px solid #f5c6cb; color: #c0392b; padding: .6rem .9rem; border-radius: 4px; margin-bottom: 1rem; }
+        form.inline { display: inline; }
+        .id-fijo { display: inline-block; padding: .35rem .5rem; color: #666; }
+    </style>
+</head>
+<body>
+<h1>Familias de Producto</h1>
+<p><a th:href="@{/}" style="color:#2f6fed;text-decoration:none">← Inicio</a></p>
+
+<div class="error" th:if="${error}" th:text="${error}"></div>
+
+<div class="contenido">
+    <div class="form-col">
+        <div class="card">
+            <h2 th:if="${productoFamilia.idProductoFamilia == null}">Nueva familia</h2>
+            <h2 th:if="${productoFamilia.idProductoFamilia != null}">Editar familia</h2>
+
+            <form th:action="@{/producto-familias/guardar}" th:object="${productoFamilia}" method="post">
+                <div th:if="${productoFamilia.idProductoFamilia != null}">
+                    <input type="hidden" th:field="*{idProductoFamilia}"/>
+                    <label>ID:</label>
+                    <span class="id-fijo" th:text="${productoFamilia.idProductoFamilia}"></span>
+                </div>
+                <br/>
+                <label>Descripción:</label>
+                <input type="text" th:field="*{descripcion}"/>
+                <br/><br/>
+                <button type="submit" class="btn-primary">Guardar</button>
+                <a class="btn-cancel" th:href="@{/producto-familias}">Cancelar</a>
+            </form>
+        </div>
+    </div>
+    <div class="table-col">
+        <form style="margin-bottom:.75rem" th:action="@{/producto-familias}" method="get">
+            <input type="text" name="termino" placeholder="Buscar..." th:value="${termino}"/>
+            <button type="submit" class="btn-primary">Buscar</button>
+            <a class="btn-cancel" th:href="@{/producto-familias}">Limpiar</a>
+        </form>
+        <table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Descripción</th>
+        <th>Acciones</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="f : ${productoFamilias}">
+        <td th:text="${f.idProductoFamilia}"></td>
+        <td th:text="${f.descripcion}"></td>
+        <td>
+            <a class="btn-edit" th:href="@{/producto-familias/editar/{id}(id=${f.idProductoFamilia})}">Editar</a>
+            <form class="inline" th:action="@{/producto-familias/eliminar/{id}(id=${f.idProductoFamilia})}" method="post">
+                <button type="submit" class="btn-del">Eliminar</button>
+            </form>
+        </td>
+    </tr>
+    </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>
